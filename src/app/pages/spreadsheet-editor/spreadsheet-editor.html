@@ -1,0 +1,38 @@
+<div class="editor-container">
+  <div class="editor-toolbar">
+    <button class="btn-back" (click)="goBack()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Documents
+    </button>
+
+    <div class="doc-title">
+      @if (isEditing()) {
+        <input
+          type="text"
+          [ngModel]="docName()"
+          (ngModelChange)="docName.set($event)"
+          (blur)="finishEditName()"
+          (keydown.enter)="finishEditName()"
+          autofocus
+          class="title-input"
+        />
+      } @else {
+        <span class="title-text" (click)="startEditName()">{{ docName() }}</span>
+      }
+    </div>
+
+    <div class="toolbar-actions">
+      <button class="btn-add-sheet" (click)="addSheet()">+ Sheet</button>
+      <button class="btn-save" (click)="saveDocument()" [disabled]="isSaving()">
+        {{ isSaving() ? 'Saving...' : 'Save' }}
+      </button>
+      @if (lastSaved()) {
+        <span class="save-status">Saved</span>
+      }
+    </div>
+  </div>
+
+  <div #univerContainer class="univer-container"></div>
+</div>

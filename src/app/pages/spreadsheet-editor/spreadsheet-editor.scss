@@ -1,0 +1,115 @@
+.editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  z-index: 100;
+  flex-shrink: 0;
+}
+
+.btn-back {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #555;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    background: #f5f5f5;
+  }
+}
+
+.doc-title {
+  flex: 1;
+  min-width: 0;
+
+  .title-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: #1a1a2e;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+
+    &:hover {
+      background: #f0f0f0;
+    }
+  }
+
+  .title-input {
+    font-size: 16px;
+    font-weight: 500;
+    padding: 4px 8px;
+    border: 2px solid #34a853;
+    border-radius: 4px;
+    outline: none;
+    width: 300px;
+    max-width: 100%;
+  }
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-add-sheet {
+  padding: 6px 14px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover {
+    background: #c8e6c9;
+  }
+}
+
+.btn-save {
+  padding: 6px 18px;
+  background: #34a853;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #2d9249;
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: default;
+  }
+}
+
+.save-status {
+  font-size: 12px;
+  color: #888;
+}
+
+.univer-container {
+  flex: 1;
+  overflow: hidden;
+}
