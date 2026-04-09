@@ -3,10 +3,11 @@ import { Router } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DbService, DocumentMeta } from '../../services/db.service';
+import { UserSwitcherComponent } from '../../components/user-switcher/user-switcher';
 
 @Component({
   selector: 'app-document-list',
-  imports: [DatePipe, FormsModule],
+  imports: [DatePipe, FormsModule, UserSwitcherComponent],
   templateUrl: './document-list.html',
   styleUrl: './document-list.scss',
 })

@@ -7,7 +7,7 @@
 .editor-toolbar {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   padding: 8px 16px;
   background: #fff;
   border-bottom: 1px solid #e0e0e0;
@@ -69,6 +69,19 @@
   flex-shrink: 0;
 }
 
+.access-badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+
+  &.view-only {
+    background: #fff3e0;
+    color: #e65100;
+    border: 1px solid #ffe0b2;
+  }
+}
+
 .btn-add-sheet {
   padding: 6px 14px;
   background: #e8f5e9;
@@ -81,6 +94,24 @@
 
   &:hover {
     background: #c8e6c9;
+  }
+}
+
+.btn-permissions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: #fce4ec;
+  color: #c62828;
+  border: 1px solid #f8bbd0;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover {
+    background: #f8bbd0;
   }
 }
 
@@ -109,7 +140,14 @@
   color: #888;
 }
 
-.univer-container {
+.editor-body {
   flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.univer-container {
+  width: 100%;
+  height: 100%;
   overflow: hidden;
 }

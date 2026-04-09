@@ -24,15 +24,42 @@
     </div>
 
     <div class="toolbar-actions">
+      @if (accessMessage()) {
+        <span class="access-badge view-only">{{ accessMessage() }}</span>
+      }
       <button class="btn-add-sheet" (click)="addSheet()">+ Sheet</button>
+
+      @if (isAdmin()) {
+        <button class="btn-permissions" (click)="togglePermPanel()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Permissions
+        </button>
+      }
+
       <button class="btn-save" (click)="saveDocument()" [disabled]="isSaving()">
         {{ isSaving() ? 'Saving...' : 'Save' }}
       </button>
       @if (lastSaved()) {
         <span class="save-status">Saved</span>
       }
+
+      <app-user-switcher (userChanged)="onUserChanged()" />
     </div>
   </div>
 
-  <div #univerContainer class="univer-container"></div>
+  <div class="editor-body">
+    <div #univerContainer class="univer-container"></div>
+
+    @if (showPermPanel()) {
+      <app-sheet-permissions
+        [documentId]="documentId"
+        [sheets]="sheetList()"
+        (closed)="showPermPanel.set(false)"
+        (permissionsChanged)="onPermissionsChanged()"
+      />
+    }
+  </div>
 </div>

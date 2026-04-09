@@ -5,11 +5,16 @@ import {
   ElementRef,
   ViewChild,
   signal,
+  computed,
   NgZone,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { DbService, StoredDocument } from '../../services/db.service';
+import { DbService } from '../../services/db.service';
+import { UserService } from '../../services/user.service';
+import { SheetPermissionService, SheetAccess } from '../../services/sheet-permission.service';
+import { UserSwitcherComponent } from '../../components/user-switcher/user-switcher';
+import { SheetPermissionsComponent, SheetInfo } from '../../components/sheet-permissions/sheet-permissions';
 
 import { createUniver, LocaleType, IWorkbookData, mergeLocales } from '@univerjs/presets';
 import { UniverSheetsCorePreset } from '@univerjs/preset-sheets-core';
@@ -19,7 +24,7 @@ import '@univerjs/preset-sheets-core/lib/index.css';
 
 @Component({
   selector: 'app-spreadsheet-editor',
-  imports: [FormsModule],
+  imports: [FormsModule, UserSwitcherComponent, SheetPermissionsComponent],
   templateUrl: './spreadsheet-editor.html',
   styleUrl: './spreadsheet-editor.scss',
 })
@@ -30,8 +35,13 @@ export class SpreadsheetEditorComponent implements OnInit, OnDestroy {
   isSaving = signal(false);
   lastSaved = signal<Date | null>(null);
   isEditing = signal(false);
+  showPermPanel = signal(false);
+  sheetList = signal<SheetInfo[]>([]);
+  accessMessage = signal('');
 
-  private documentId = '';
+  isAdmin = computed(() => this.userService.isAdmin());
+
+  documentId = '';
   private univerAPI: any;
   private univer: any;
   private autoSaveInterval: ReturnType<typeof setInterval> | null = null;
@@ -41,6 +51,8 @@ export class SpreadsheetEditorComponent implements OnInit, OnDestroy {
     private router: Router,
     private db: DbService,
     private ngZone: NgZone,
+    public userService: UserService,
+    private permService: SheetPermissionService,
   ) {}
 
   async ngOnInit() {
@@ -56,6 +68,7 @@ export class SpreadsheetEditorComponent implements OnInit, OnDestroy {
     const workbookData: IWorkbookData = JSON.parse(stored.data);
 
     this.initUniver(workbookData);
+    await this.applyPermissions();
     this.startAutoSave();
   }
 
@@ -76,6 +89,90 @@ export class SpreadsheetEditorComponent implements OnInit, OnDestroy {
     this.univerAPI = univerAPI;
 
     univerAPI.createWorkbook(workbookData);
+  }
+
+  async applyPermissions() {
+    const workbook = this.univerAPI?.getActiveWorkbook();
+    if (!workbook) return;
+
+    const permission = workbook.getPermission();
+    const unitId = workbook.getId();
+    const sheets = workbook.getSheets();
+    const role = this.userService.activeUser().role;
+
+    const sheetInfos: SheetInfo[] = [];
+
+    for (const sheet of sheets) {
+      const sheetId = sheet.getSheetId();
+      const sheetName = sheet.getSheetName();
+      sheetInfos.push({ sheetId, sheetName });
+
+      const access: SheetAccess = await this.permService.getSheetAccess(
+        this.documentId,
+        sheetId,
+        role,
+      );
+
+      if (access === 'edit') {
+        // Full access — remove any existing protection
+        permission.removeWorksheetPermission(unitId, sheetId);
+      } else if (access === 'view') {
+        // View only — protect the sheet so it can't be edited
+        await permission.addWorksheetBasePermission(unitId, sheetId);
+        await permission.setWorksheetPermissionPoint(
+          unitId, sheetId,
+          permission.permissionPointsDefinition.WorksheetEditPermission,
+          false,
+        );
+        await permission.setWorksheetPermissionPoint(
+          unitId, sheetId,
+          permission.permissionPointsDefinition.WorksheetSetCellValuePermission,
+          false,
+        );
+        await permission.setWorksheetPermissionPoint(
+          unitId, sheetId,
+          permission.permissionPointsDefinition.WorksheetSetCellStylePermission,
+          false,
+        );
+        await permission.setWorksheetPermissionPoint(
+          unitId, sheetId,
+          permission.permissionPointsDefinition.WorksheetInsertRowPermission,
+          false,
+        );
+        await permission.setWorksheetPermissionPoint(
+          unitId, sheetId,
+          permission.permissionPointsDefinition.WorksheetInsertColumnPermission,
+          false,
+        );
+        await permission.setWorksheetPermissionPoint(
+          unitId, sheetId,
+          permission.permissionPointsDefinition.WorksheetDeleteRowPermission,
+          false,
+        );
+        await permission.setWorksheetPermissionPoint(
+          unitId, sheetId,
+          permission.permissionPointsDefinition.WorksheetDeleteColumnPermission,
+          false,
+        );
+      }
+    }
+
+    this.sheetList.set(sheetInfos);
+
+    // Show access message for non-admin users
+    if (role !== 'admin') {
+      const activeSheet = workbook.getActiveSheet();
+      const activeAccess = await this.permService.getSheetAccess(
+        this.documentId,
+        activeSheet.getSheetId(),
+        role,
+      );
+      this.accessMessage.set(
+        activeAccess === 'view' ? 'View Only — You cannot edit this sheet' : '',
+      );
+    } else {
+      this.accessMessage.set('');
+    }
   }
 
   private startAutoSave() {
@@ -100,12 +197,11 @@ export class SpreadsheetEditorComponent implements OnInit, OnDestroy {
       await this.db.saveDocument({
         id: this.documentId,
         name: this.docName(),
-        createdAt: 0, // will be preserved by put
+        createdAt: 0,
         updatedAt: now,
         data: JSON.stringify(snapshot),
       });
 
-      // Preserve createdAt
       const existing = await this.db.getDocument(this.documentId);
       if (existing && existing.createdAt === 0) {
         existing.createdAt = now;
@@ -139,7 +235,35 @@ export class SpreadsheetEditorComponent implements OnInit, OnDestroy {
     if (!workbook) return;
     const sheets = workbook.getSheets();
     const name = `Sheet${sheets.length + 1}`;
-    workbook.create(name, 100, 26);
+    const newSheet = workbook.create(name, 100, 26);
+    const sheetId = newSheet.getSheetId();
+
+    // Initialize default permissions for the new sheet
+    await this.permService.initSheetDefaults(this.documentId, sheetId);
+
+    // Refresh sheet list and permissions
+    await this.applyPermissions();
+  }
+
+  async onUserChanged() {
+    // Re-apply permissions when user role changes
+    await this.applyPermissions();
+  }
+
+  async onPermissionsChanged() {
+    await this.applyPermissions();
+  }
+
+  togglePermPanel() {
+    // Refresh sheet list before showing
+    const workbook = this.univerAPI?.getActiveWorkbook();
+    if (workbook) {
+      const sheets = workbook.getSheets();
+      this.sheetList.set(
+        sheets.map((s: any) => ({ sheetId: s.getSheetId(), sheetName: s.getSheetName() })),
+      );
+    }
+    this.showPermPanel.update(v => !v);
   }
 
   ngOnDestroy() {

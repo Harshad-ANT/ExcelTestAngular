@@ -17,7 +17,7 @@ export interface StoredDocument {
 }
 
 const DB_NAME = 'UniversSheetsDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = 'documents';
 
 @Injectable({ providedIn: 'root' })
@@ -36,6 +36,9 @@ export class DbService {
         if (!db.objectStoreNames.contains(STORE_NAME)) {
           const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
           store.createIndex('updatedAt', 'updatedAt', { unique: false });
+        }
+        if (!db.objectStoreNames.contains('permissions')) {
+          db.createObjectStore('permissions', { keyPath: 'documentId' });
         }
       };
       request.onsuccess = () => resolve(request.result);
