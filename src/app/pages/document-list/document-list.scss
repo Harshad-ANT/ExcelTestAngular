@@ -41,6 +41,21 @@
   }
 }
 
+.template-select {
+  padding: 10px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 15px;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: #34a853;
+  }
+}
+
 .btn-create {
   padding: 10px 24px;
   background: #34a853;
@@ -53,8 +68,13 @@
   white-space: nowrap;
   transition: background 0.2s;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: #2d9249;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 }
 

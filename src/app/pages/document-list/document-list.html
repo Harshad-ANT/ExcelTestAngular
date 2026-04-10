@@ -12,7 +12,26 @@
         (ngModelChange)="newDocName.set($event)"
         (keydown.enter)="createDocument()"
       />
-      <button class="btn-create" (click)="createDocument()">+ New Document</button>
+      <select
+        [ngModel]="selectedTemplate()"
+        (ngModelChange)="selectedTemplate.set($event)"
+        class="template-select"
+      >
+        @for (tpl of templates; track tpl.id) {
+          <option [value]="tpl.id">{{ tpl.name }}</option>
+        }
+      </select>
+      <button
+        class="btn-create"
+        (click)="createDocument()"
+        [disabled]="isCreating()"
+      >
+        @if (isCreating()) {
+          Creating...
+        } @else {
+          + New Document
+        }
+      </button>
     </div>
   </header>
 

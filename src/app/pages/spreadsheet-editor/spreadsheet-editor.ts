@@ -17,10 +17,14 @@ import { UserSwitcherComponent } from '../../components/user-switcher/user-switc
 import { SheetPermissionsComponent, SheetInfo } from '../../components/sheet-permissions/sheet-permissions';
 
 import { createUniver, LocaleType, IWorkbookData, mergeLocales } from '@univerjs/presets';
+import { CalculationMode } from '@univerjs/sheets-formula';
 import { UniverSheetsCorePreset } from '@univerjs/preset-sheets-core';
+import { UniverSheetsDataValidationPlugin } from '@univerjs/sheets-data-validation';
+import { UniverSheetsDataValidationUIPlugin } from '@univerjs/sheets-data-validation-ui';
 import sheetsCoreEnUS from '@univerjs/preset-sheets-core/locales/en-US';
 
 import '@univerjs/preset-sheets-core/lib/index.css';
+import '@univerjs/sheets-data-validation-ui/lib/index.css';
 
 @Component({
   selector: 'app-spreadsheet-editor',
@@ -81,15 +85,22 @@ export class SpreadsheetEditorComponent implements OnInit, OnDestroy {
       presets: [
         UniverSheetsCorePreset({
           container,
+          formula: {
+            initialFormulaComputing: CalculationMode.FORCED,
+          },
         }),
       ],
     });
+
+    univer.registerPlugin(UniverSheetsDataValidationPlugin);
+    univer.registerPlugin(UniverSheetsDataValidationUIPlugin);
 
     this.univer = univer;
     this.univerAPI = univerAPI;
 
     univerAPI.createWorkbook(workbookData);
   }
+
 
   async applyPermissions() {
     const workbook = this.univerAPI?.getActiveWorkbook();
